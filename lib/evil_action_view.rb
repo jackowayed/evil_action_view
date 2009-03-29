@@ -1,3 +1,28 @@
+module ActionController
+  class Base
+    def add_instance_variables_to_assigns
+      @assigns = {}
+      (instance_variable_names - @@protected_instance_variables).each do |var|
+        value = instance_variable_get(var)
+        @assigns[var[1..-1]] = value
+        response.template.assigns[var[1..-1]] = value if response
+      end
+    end
+  end
+end
+
+module ActionView
+  class Base
+    def _set_controller_content_type(content_type)
+      return
+    end
+    def assign_variables_from_controller
+        @assigns.each { |key, value| instance_variable_set("@#{key}", value) }
+    end
+  end
+end
+
+
 require 'ostruct'
 
 module EvilActionView
@@ -14,7 +39,6 @@ module EvilActionView
 
       controller.send(:initialize_current_url)
 
-      controller.instance_variable_set("@assigns", {})
       controller.send :add_instance_variables_to_assigns
 
       @view_template = ActionView::Base.new([RAILS_ROOT + '/app/views'], controller.instance_variable_get("@assigns"), controller)
